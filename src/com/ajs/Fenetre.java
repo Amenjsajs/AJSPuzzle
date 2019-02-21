@@ -1,5 +1,7 @@
 package com.ajs;
 
+import com.ajs.com.ajs.bibliothek.BibliothekDialog;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -12,6 +14,8 @@ public class Fenetre extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
+
+        new BibliothekDialog(this,"Biblithèque",true);
 
         container = getContentPane();
         container.setLayout(new FlowLayout());

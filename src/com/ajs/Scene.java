@@ -1,5 +1,7 @@
 package com.ajs;
 
+import com.ajs.com.ajs.bibliothek.BiblioImage;
+import com.ajs.com.ajs.bibliothek.BibliothekDialog;
 import com.ajs.fileChooser.FilePreviewer;
 import com.ajs.fileChooser.MonFilter;
 
@@ -87,7 +89,6 @@ public class Scene extends JPanel {
         }
         this.piecesList = new ArrayList<>();
         this.pieceImage = new HashMap<>();
-        setBackground(Color.cyan);
         this.fileChooser = new JFileChooser();
         fileChooser.setAcceptAllFileFilterUsed(false);
         MonFilter mfi = new MonFilter(suffixesImages, "les fichiers image (*.png, *.jpeg");
@@ -163,7 +164,7 @@ public class Scene extends JPanel {
 
                 repaint();
 
-                if(isWin){
+                if (isWin) {
                     JOptionPane.showMessageDialog(null, "Bravo!!!\nVous avez gagné.", "Congratulation", OK_OPTION);
                 }
             }
@@ -192,6 +193,13 @@ public class Scene extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
+
+        Color color1 = new Color(32, 150, 250);
+        Color color2 = new Color(5, 250, 153);
+        GradientPaint gp = new GradientPaint(0, 0, color1, 0, getHeight() / 2, color2, false);
+        g2d.setPaint(gp);
+        g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
+
         drawBorder(g2d);
         drawControls(g2d);
         if (isBuild) {
@@ -207,7 +215,7 @@ public class Scene extends JPanel {
                 BasicStroke.CAP_ROUND,
                 BasicStroke.JOIN_BEVEL));
 
-        g2d.setColor(Color.red);
+        g2d.setColor(new Color(50, 53, 127));
         g2d.drawRect(CONTROL_SPACE_WIDTH + BORDER_WIDTH - 3, BORDER_WIDTH - 3, tmpImagePuzzleSize + BORDER_WIDTH, tmpImagePuzzleSize + BORDER_WIDTH);
         g2d.drawRect(CONTROL_SPACE_WIDTH + BORDER_WIDTH - 3 + tmpImagePuzzleSize + BORDER_WIDTH + 15,
                 BORDER_WIDTH - 3, tmpImagePuzzleSize + BORDER_WIDTH, tmpImagePuzzleSize + BORDER_WIDTH);
@@ -441,10 +449,16 @@ public class Scene extends JPanel {
     }
 
     private void controlChooseImage() {
-        int retour = fileChooser.showOpenDialog(null);
-        if (retour == JFileChooser.APPROVE_OPTION) {
+//        int retour = fileChooser.showOpenDialog(null);
+//        if (retour == JFileChooser.APPROVE_OPTION) {
+//            isWin = false;
+//            imageFile = fileChooser.getSelectedFile();
+//            build();
+//        }
+        int rep = BibliothekDialog.getInstance().showDialog();
+        if (rep == BibliothekDialog.OK_OPTION) {
             isWin = false;
-            imageFile = fileChooser.getSelectedFile();
+            imageFile = BiblioImage.getCurrent().getPath().toFile();
             build();
         }
     }
@@ -523,6 +537,8 @@ public class Scene extends JPanel {
                 for (Path p : stream) {
                     paths.add(p);
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
             if (paths.size() > 0) {
