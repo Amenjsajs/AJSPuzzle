@@ -23,6 +23,7 @@ public class BibliothekDialog extends JDialog {
     private JPanel contentPane;
     private JButton btnOk;
     private JButton btnChoose;
+    private JButton btnDelete;
     private Path imagesDirectory = Paths.get(Paths.get("").toAbsolutePath() + "/images");
     private final Color color1 = new Color(32, 150, 250);
     private final Color color2 = new Color(5, 250, 153);
@@ -83,7 +84,7 @@ public class BibliothekDialog extends JDialog {
         panelBtns.setBackground(color1);
         container.add(panelBtns, BorderLayout.SOUTH);
 
-        int btnWidth = 200;
+        int btnWidth = 180;
         int btnHeight = 30;
         btnOk = new JButton("OK");
         btnOk.setPreferredSize(new Dimension(btnWidth, btnHeight));
@@ -101,6 +102,7 @@ public class BibliothekDialog extends JDialog {
             int rep = fileChooser.showOpenDialog(null);
             if (rep == JFileChooser.APPROVE_OPTION) {
                 try {
+                    this.setTitle(title);
                     Path newImagePath;
                     for (File file : fileChooser.getSelectedFiles()) {
                         BufferedImage img;
@@ -119,6 +121,19 @@ public class BibliothekDialog extends JDialog {
             }
         });
         panelBtns.add(btnChoose);
+
+        btnDelete = new JButton("Supprimer");
+        btnDelete.setPreferredSize(new Dimension(btnWidth, btnHeight));
+        btnDelete.addActionListener(e->{
+            if(BiblioImage.getCurrent() != null){
+                contentPane.remove(BiblioImage.getCurrent());
+                contentPane.repaint();
+                contentPane.revalidate();
+                BiblioImage.deleteCurrent();
+                updateContentPaneHeight();
+            }
+        });
+        panelBtns.add(btnDelete);
 
         addWindowListener(new WindowAdapter() {
             @Override

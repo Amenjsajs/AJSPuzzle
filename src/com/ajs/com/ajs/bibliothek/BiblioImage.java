@@ -6,6 +6,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
@@ -102,6 +104,20 @@ public class BiblioImage extends JPanel {
             current.borderColorHovered = new Color(0,0,0,0);
             current.isCurrent = false;
             current.repaint();
+            current = null;
+        }
+    }
+
+    public static void deleteCurrent(){
+        if(current != null){
+            Path path = current.path;
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            pathList.remove(path);
+            biblioImageList.remove(current);
             current = null;
         }
     }
