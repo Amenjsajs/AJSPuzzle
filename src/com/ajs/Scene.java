@@ -45,7 +45,7 @@ public class Scene extends JPanel {
     private int CONTROL_WIDTH = CONTROL_SPACE_WIDTH - (CONTROL_MARGING_LEFT * 2);
     private int CONTROL_HEIGHT = 40;
     private int currentControlIndex = -1;
-    private Integer[] nbPieceList = {4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 1024};
+    private Integer[] nbPieceList = {4, 9, 16, 25, 36, 49, 64, 81, 100};
 
     private int BORDER_WIDTH = 5;
     private final int IMAGE_PUZZLE_SIZE = 400;
@@ -79,7 +79,7 @@ public class Scene extends JPanel {
     private final Color gradientColor2 = new Color(5, 250, 153);
 
     private Scene() {
-        Path path = Paths.get(CURRENT_RELATIVE_PATH + "/images/1.jpg");
+        Path path = Paths.get(CURRENT_RELATIVE_PATH + "/images/amenjs.png");
         if (Files.exists(path)) {
             imageFile = path.toFile();
         } else {
