@@ -17,13 +17,17 @@ public class BiblioImage extends JPanel {
     private static ArrayList<Path> pathList = new ArrayList<>();
     private final Image image;
     private final Path path;
+    private final JDialog parent;
+    private String parentTitle;
     private static final Dimension dimension = new Dimension(150, 150);
     private Color borderColorHovered = new Color(0, 0, 0, 0);
     private final int BORDER_WIDTH = 6;
 
-    public BiblioImage(Image image, Path path) {
+    public BiblioImage(Image image, Path path, JDialog parent) {
         this.image = ImageResizer.scaleImage(image, (int) dimension.getWidth() - BORDER_WIDTH, (int) dimension.getHeight() - BORDER_WIDTH);
         this.path = path;
+        this.parent = parent;
+        parentTitle = parent.getTitle();
         self = this;
         isCurrent = false;
         setPreferredSize(dimension);
@@ -39,11 +43,13 @@ public class BiblioImage extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 current = self;
                 isCurrent = true;
+                parent.setTitle(parentTitle+" "+current.getPath().getFileName());
                 for (BiblioImage biblioImage: biblioImageList){
-                    if(!current.equals(biblioImage)){
+                    if(!current.equals(biblioImage) && biblioImage.isCurrent){
                         biblioImage.isCurrent = false;
                         biblioImage.borderColorHovered = new Color(0,0,0,0);
                         biblioImage.repaint();
+                        break;
                     }
                 }
                 repaint();

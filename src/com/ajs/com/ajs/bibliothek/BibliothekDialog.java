@@ -24,6 +24,8 @@ public class BibliothekDialog extends JDialog {
     private JButton btnOk;
     private JButton btnChoose;
     private Path imagesDirectory = Paths.get(Paths.get("").toAbsolutePath() + "/images");
+    private final Color color1 = new Color(32, 150, 250);
+    private final Color color2 = new Color(5, 250, 153);
 
     public static final int OK_OPTION = 0;
     public static final int OK_CANCEL = -1;
@@ -32,8 +34,11 @@ public class BibliothekDialog extends JDialog {
     private final JFileChooser fileChooser;
     private String[] suffixesImages = {"jpeg", "jpg", "png"};
 
+    private String title;
+
     public BibliothekDialog(JFrame parent, String title, boolean isModal) {
         super(parent, title, isModal);
+        this.title = title;
         instance = this;
         Dimension dim = Scene.getInstance().getPreferredSize();
         setSize(new Dimension(600, (int) dim.getHeight()));
@@ -63,20 +68,25 @@ public class BibliothekDialog extends JDialog {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
-                Color color1 = new Color(32, 150, 250);
-                Color color2 = new Color(5, 250, 153);
                 GradientPaint gp = new GradientPaint(0, 0, color2, 0, getHeight() / 2, color1, false);
                 g2d.setPaint(gp);
                 g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
             }
         };
         contentPane.setPreferredSize(new Dimension(500, 400));
-        container.add(new JScrollPane(contentPane), BorderLayout.CENTER);
+        JScrollPane scrollPane = new JScrollPane(contentPane);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getVerticalScrollBar().setUnitIncrement(30);
+        container.add(scrollPane, BorderLayout.CENTER);
 
         JPanel panelBtns = new JPanel();
+        panelBtns.setBackground(color1);
         container.add(panelBtns, BorderLayout.SOUTH);
 
+        int btnWidth = 200;
+        int btnHeight = 30;
         btnOk = new JButton("OK");
+        btnOk.setPreferredSize(new Dimension(btnWidth, btnHeight));
         btnOk.addActionListener(e -> {
             if (BiblioImage.getCurrent() != null) {
                 rep = BibliothekDialog.OK_OPTION;
@@ -86,6 +96,7 @@ public class BibliothekDialog extends JDialog {
         panelBtns.add(btnOk);
 
         btnChoose = new JButton("Ajouter d'autres images");
+        btnChoose.setPreferredSize(new Dimension(btnWidth, btnHeight));
         btnChoose.addActionListener(e -> {
             int rep = fileChooser.showOpenDialog(null);
             if (rep == JFileChooser.APPROVE_OPTION) {
@@ -98,7 +109,7 @@ public class BibliothekDialog extends JDialog {
                         File fileImage = new File(String.valueOf(newImagePath));
                         ImageIO.write(img, "jpg", fileImage);
                         if (!BiblioImage.getPathList().contains(newImagePath)) {
-                            contentPane.add(new BiblioImage(img, newImagePath));
+                            contentPane.add(new BiblioImage(img, newImagePath, this));
                         }
                     }
                     updateContentPaneHeight();
@@ -122,7 +133,7 @@ public class BibliothekDialog extends JDialog {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(imagesDirectory, "*.{jpg,jpeg,png}")) {
             for (Path p : stream) {
                 if (!BiblioImage.getPathList().contains(p)) {
-                    contentPane.add(new BiblioImage(new ImageIcon(String.valueOf(p)).getImage(), p));
+                    contentPane.add(new BiblioImage(new ImageIcon(String.valueOf(p)).getImage(), p, this) );
                 }
             }
             updateContentPaneHeight();
@@ -130,6 +141,7 @@ public class BibliothekDialog extends JDialog {
             e.printStackTrace();
         }
         BiblioImage.clean();
+        instance.setTitle(title);
         setVisible(true);
         return rep;
     }

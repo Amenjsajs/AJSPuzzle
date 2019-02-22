@@ -2,8 +2,6 @@ package com.ajs;
 
 import com.ajs.com.ajs.bibliothek.BiblioImage;
 import com.ajs.com.ajs.bibliothek.BibliothekDialog;
-import com.ajs.fileChooser.FilePreviewer;
-import com.ajs.fileChooser.MonFilter;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -24,7 +22,7 @@ import java.util.HashMap;
 import static javax.swing.JOptionPane.*;
 
 public class Scene extends JPanel {
-    private final Path currentRelativePath = Paths.get("").toAbsolutePath();
+    private final Path CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath();
 
     private boolean isWin = false;
     private boolean isBackup = false; //Pour vérifier si le puzzle est une sauvegarde
@@ -64,13 +62,10 @@ public class Scene extends JPanel {
 
     private boolean isBuild = false;
 
-    private final static String MOVE_LEFT = "left";
-    private final static String MOVE_RIGHT = "right";
-    private final static String MOVE_TOP = "top";
-    private final static String MOVE_BOTTOM = "bottom";
-
-    private JFileChooser fileChooser;
-    private String[] suffixesImages = {"jpeg", "jpg", "png"};
+    private final static String MOVE_LEFT = "move_left";
+    private final static String MOVE_RIGHT = "move_right";
+    private final static String MOVE_TOP = "move_top";
+    private final static String MOVE_BOTTOM = "move_bottom";
 
     //Sert pour le melange et le refresh
     int[] tmpX;
@@ -80,8 +75,11 @@ public class Scene extends JPanel {
     private final Color controlDiseabledColor = new Color(150, 150, 150);
     private final Color controlColorHover = new Color(150, 220, 0);
 
+    private final Color gradientColor1 = new Color(32, 150, 250);
+    private final Color gradientColor2 = new Color(5, 250, 153);
+
     private Scene() {
-        Path path = Paths.get(currentRelativePath + "/images/1.jpg");
+        Path path = Paths.get(CURRENT_RELATIVE_PATH + "/images/1.jpg");
         if (Files.exists(path)) {
             imageFile = path.toFile();
         } else {
@@ -89,18 +87,11 @@ public class Scene extends JPanel {
         }
         this.piecesList = new ArrayList<>();
         this.pieceImage = new HashMap<>();
-        this.fileChooser = new JFileChooser();
-        fileChooser.setAcceptAllFileFilterUsed(false);
-        MonFilter mfi = new MonFilter(suffixesImages, "les fichiers image (*.png, *.jpeg");
-        FilePreviewer previewer = new FilePreviewer(fileChooser, null);
-        fileChooser.setAccessory(previewer);
-        fileChooser.addChoosableFileFilter(mfi);
 
         setPreferredSize(new Dimension(CONTROL_SPACE_WIDTH + tmpImagePuzzleSize * 2 + 20 + BORDER_WIDTH * 2, tmpImagePuzzleSize + BORDER_WIDTH * 2));
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-
                 if (currentControlIndex != -1) {
                     String text = controlText[currentControlIndex];
                     switch (text) {
@@ -131,11 +122,7 @@ public class Scene extends JPanel {
                         case CONTROL_TEXT_LOAD:
                             controlSave("Sauvegardez cette partie avant de charger une sauvegarde\n" +
                                     "Sinon elle sera définitivement perdue");
-                            try {
-                                controlLoad();
-                            } catch (IOException e1) {
-                                e1.printStackTrace();
-                            }
+                            controlLoad();
                             break;
                         case CONTROL_TEXT_REFRESH:
                             if (imageFile != null) {
@@ -148,7 +135,7 @@ public class Scene extends JPanel {
                                         "Voulez-vous vraiment supprimer cette sauvegarde?",
                                         "Confirmation", OK_CANCEL_OPTION);
                                 if (rep == OK_OPTION) {
-                                    controlDeleeteBackup();
+                                    controlDeleteBackup();
                                 }
                             }
                             break;
@@ -159,14 +146,14 @@ public class Scene extends JPanel {
                     if (!isWin) {
                         move();
                         winTested();
+                        if (isWin) {
+                            repaint();
+                            JOptionPane.showMessageDialog(null, "Bravo!!!\nVous avez gagné.", "Congratulation", INFORMATION_MESSAGE);
+                        }
                     }
                 }
 
                 repaint();
-
-                if (isWin) {
-                    JOptionPane.showMessageDialog(null, "Bravo!!!\nVous avez gagné.", "Congratulation", OK_OPTION);
-                }
             }
         });
         addMouseMotionListener(new MouseMotionAdapter() {
@@ -193,10 +180,7 @@ public class Scene extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
-
-        Color color1 = new Color(32, 150, 250);
-        Color color2 = new Color(5, 250, 153);
-        GradientPaint gp = new GradientPaint(0, 0, color1, 0, getHeight() / 2, color2, false);
+        GradientPaint gp = new GradientPaint(0, 0, gradientColor1, 0, getHeight() / 2, gradientColor2, false);
         g2d.setPaint(gp);
         g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
 
@@ -449,12 +433,6 @@ public class Scene extends JPanel {
     }
 
     private void controlChooseImage() {
-//        int retour = fileChooser.showOpenDialog(null);
-//        if (retour == JFileChooser.APPROVE_OPTION) {
-//            isWin = false;
-//            imageFile = fileChooser.getSelectedFile();
-//            build();
-//        }
         int rep = BibliothekDialog.getInstance().showDialog();
         if (rep == BibliothekDialog.OK_OPTION) {
             isWin = false;
@@ -463,10 +441,10 @@ public class Scene extends JPanel {
         }
     }
 
-    public void controlSave() throws IOException {
+    private void controlSave() throws IOException {
         ObjectOutputStream oos = null;
 
-        Path path = Paths.get(currentRelativePath + "/sauvegardes");
+        Path path = Paths.get(CURRENT_RELATIVE_PATH + "/sauvegardes");
         if (Files.notExists(path)) {
             Files.createDirectory(path);
         }
@@ -476,13 +454,12 @@ public class Scene extends JPanel {
             Files.createFile(pathFichierPieces);
         }
 
-        path = Paths.get(currentRelativePath + "/images");
+        path = Paths.get(CURRENT_RELATIVE_PATH + "/images");
         if (Files.notExists(path)) {
             Files.createDirectory(path);
         }
 
         Path pathImage = Paths.get(path + "/" + imageFile.getName());
-        System.out.println(pathImage);
         if (Files.notExists(pathImage)) {
             BufferedImage img = ImageIO.read(imageFile);
             File file = new File(String.valueOf(pathImage));
@@ -514,7 +491,7 @@ public class Scene extends JPanel {
         }
     }
 
-    public void controlSave(String msg) {
+    private void controlSave(String msg) {
         if (imageFile != null) {
             int rep = JOptionPane.showConfirmDialog(null, msg, "Confirmation", YES_NO_OPTION);
             if (rep == YES_OPTION) {
@@ -527,8 +504,8 @@ public class Scene extends JPanel {
         }
     }
 
-    public void controlLoad() throws IOException {
-        Path path = Paths.get(currentRelativePath + "/sauvegardes");
+    private void controlLoad() {
+        Path path = Paths.get(CURRENT_RELATIVE_PATH + "/sauvegardes");
 
         if (Files.exists(path)) {
             ArrayList<Path> paths = new ArrayList<>();
@@ -624,7 +601,7 @@ public class Scene extends JPanel {
         }
     }
 
-    private void controlDeleeteBackup() {
+    private void controlDeleteBackup() {
         if (isBackup) {
             try {
                 Files.deleteIfExists(backupPath);
@@ -657,26 +634,6 @@ public class Scene extends JPanel {
             lastPiece.setX(lastPiece.getSubX() + CONTROL_SPACE_WIDTH + BORDER_WIDTH);
             lastPiece.setY(lastPiece.getSubY() + BORDER_WIDTH);
         }
-    }
-
-    public ArrayList<Piece> getPiecesList() {
-        return piecesList;
-    }
-
-    public File getImageFile() {
-        return imageFile;
-    }
-
-    public void setImageFile(File imageFile) {
-        this.imageFile = imageFile;
-    }
-
-    public int getNbPieces() {
-        return nbPieces;
-    }
-
-    public void setNbPieces(int nbPieces) {
-        this.nbPieces = nbPieces;
     }
 
     public static Scene getInstance() {

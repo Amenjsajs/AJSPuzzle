@@ -15,7 +15,7 @@ public class Fenetre extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
 
-        new BibliothekDialog(this,"Biblithèque",true);
+        new BibliothekDialog(this,"Bibliothèque",true);
 
         container = getContentPane();
         container.setLayout(new FlowLayout());
