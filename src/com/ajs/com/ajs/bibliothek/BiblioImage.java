@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class BiblioImage extends JPanel {
+    private static Path currentPathImage = null;
     private static BiblioImage current = null;
     private final BiblioImage self;
     private boolean isCurrent;
@@ -35,7 +36,7 @@ public class BiblioImage extends JPanel {
         setPreferredSize(dimension);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        if(!pathList.contains(path)){
+        if (!pathList.contains(path)) {
             pathList.add(path);
             biblioImageList.add(this);
         }
@@ -45,11 +46,11 @@ public class BiblioImage extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 current = self;
                 isCurrent = true;
-                parent.setTitle(parentTitle+" "+current.getPath().getFileName());
-                for (BiblioImage biblioImage: biblioImageList){
-                    if(!current.equals(biblioImage) && biblioImage.isCurrent){
+                parent.setTitle(parentTitle + " " + current.getPath().getFileName());
+                for (BiblioImage biblioImage : biblioImageList) {
+                    if (!current.equals(biblioImage) && biblioImage.isCurrent) {
                         biblioImage.isCurrent = false;
-                        biblioImage.borderColorHovered = new Color(0,0,0,0);
+                        biblioImage.borderColorHovered = new Color(0, 0, 0, 0);
                         biblioImage.repaint();
                         break;
                     }
@@ -65,7 +66,7 @@ public class BiblioImage extends JPanel {
 
             @Override
             public void mouseExited(MouseEvent e) {
-                if(!isCurrent){
+                if (!isCurrent) {
                     borderColorHovered = new Color(0, 0, 0, 0);
                 }
                 repaint();
@@ -99,17 +100,17 @@ public class BiblioImage extends JPanel {
         return current;
     }
 
-    public static void clean(){
-        if(current != null){
-            current.borderColorHovered = new Color(0,0,0,0);
+    public static void clean() {
+        if (current != null) {
+            current.borderColorHovered = new Color(0, 0, 0, 0);
             current.isCurrent = false;
             current.repaint();
             current = null;
         }
     }
 
-    public static void deleteCurrent(){
-        if(current != null){
+    public static void deleteCurrent() {
+        if (current != null) {
             Path path = current.path;
             try {
                 Files.deleteIfExists(path);
@@ -124,5 +125,13 @@ public class BiblioImage extends JPanel {
 
     public Path getPath() {
         return path;
+    }
+
+    public static Path getCurrentPathImage() {
+        return currentPathImage;
+    }
+
+    public static void setCurrentPathImage(Path currentPathImage) {
+        BiblioImage.currentPathImage = currentPathImage;
     }
 }

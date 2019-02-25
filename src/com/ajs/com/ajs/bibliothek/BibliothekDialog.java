@@ -126,11 +126,14 @@ public class BibliothekDialog extends JDialog {
         btnDelete.setPreferredSize(new Dimension(btnWidth, btnHeight));
         btnDelete.addActionListener(e->{
             if(BiblioImage.getCurrent() != null){
-                contentPane.remove(BiblioImage.getCurrent());
-                contentPane.repaint();
-                contentPane.revalidate();
-                BiblioImage.deleteCurrent();
-                updateContentPaneHeight();
+                if(BiblioImage.getCurrentPathImage().compareTo(BiblioImage.getCurrent().getPath()) != 0){
+                    contentPane.remove(BiblioImage.getCurrent());
+                    contentPane.repaint();
+                    BiblioImage.deleteCurrent();
+                    updateContentPaneHeight();
+                }else{
+                    JOptionPane.showMessageDialog(null,"Cette image ne peut être supprimée.\nElle est actuellement utilisée.");
+                }
             }
         });
         panelBtns.add(btnDelete);

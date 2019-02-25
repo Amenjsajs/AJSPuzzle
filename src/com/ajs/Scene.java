@@ -82,6 +82,7 @@ public class Scene extends JPanel {
         Path path = Paths.get(CURRENT_RELATIVE_PATH + "/images/amenjs.png");
         if (Files.exists(path)) {
             imageFile = path.toFile();
+            BiblioImage.setCurrentPathImage(path);
         } else {
             imageFile = null;
         }
@@ -437,6 +438,7 @@ public class Scene extends JPanel {
         if (rep == BibliothekDialog.OK_OPTION) {
             isWin = false;
             imageFile = BiblioImage.getCurrent().getPath().toFile();
+            BiblioImage.setCurrentPathImage(BiblioImage.getCurrent().getPath());
             build();
         }
     }
