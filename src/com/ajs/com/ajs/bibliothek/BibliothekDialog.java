@@ -104,8 +104,8 @@ public class BibliothekDialog extends JDialog {
                 try {
                     this.setTitle(title);
                     Path newImagePath;
+                    BufferedImage img;
                     for (File file : fileChooser.getSelectedFiles()) {
-                        BufferedImage img;
                         img = ImageIO.read(file.getAbsoluteFile());
                         newImagePath = Paths.get(imagesDirectory + "/" + file.getName());
                         File fileImage = new File(String.valueOf(newImagePath));
@@ -124,15 +124,15 @@ public class BibliothekDialog extends JDialog {
 
         btnDelete = new JButton("Supprimer");
         btnDelete.setPreferredSize(new Dimension(btnWidth, btnHeight));
-        btnDelete.addActionListener(e->{
-            if(BiblioImage.getCurrent() != null){
-                if(BiblioImage.getCurrentPathImage().compareTo(BiblioImage.getCurrent().getPath()) != 0){
+        btnDelete.addActionListener(e -> {
+            if (BiblioImage.getCurrent() != null) {
+                if (BiblioImage.getCurrentPathImage().compareTo(BiblioImage.getCurrent().getPath()) != 0) {
                     contentPane.remove(BiblioImage.getCurrent());
                     contentPane.repaint();
                     BiblioImage.deleteCurrent();
                     updateContentPaneHeight();
-                }else{
-                    JOptionPane.showMessageDialog(null,"Cette image ne peut être supprimée.\nElle est actuellement utilisée.");
+                } else {
+                    JOptionPane.showMessageDialog(null, "Cette image ne peut être supprimée.\nElle est actuellement utilisée.");
                 }
             }
         });
@@ -151,7 +151,7 @@ public class BibliothekDialog extends JDialog {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(imagesDirectory, "*.{jpg,jpeg,png}")) {
             for (Path p : stream) {
                 if (!BiblioImage.getPathList().contains(p)) {
-                    contentPane.add(new BiblioImage(new ImageIcon(String.valueOf(p)).getImage(), p, this) );
+                    contentPane.add(new BiblioImage(new ImageIcon(String.valueOf(p)).getImage(), p, this));
                 }
             }
             updateContentPaneHeight();
@@ -165,8 +165,10 @@ public class BibliothekDialog extends JDialog {
     }
 
     private void updateContentPaneHeight() {
-        int nbLine = (int) Math.ceil(BiblioImage.getPathList().size() / 3.0);
-        int height = nbLine * (5 + BiblioImage.getDimension().height);
+        int nbColumn = 3;
+        int marging = 5;
+        int nbLine = (int) Math.ceil((double) BiblioImage.getPathList().size() / nbColumn);
+        int height = nbLine * (marging + BiblioImage.getDimension().height);
         contentPane.setPreferredSize(new Dimension(contentPane.getWidth(), height));
         contentPane.revalidate();
     }
@@ -174,5 +176,4 @@ public class BibliothekDialog extends JDialog {
     public static BibliothekDialog getInstance() {
         return instance;
     }
-
 }

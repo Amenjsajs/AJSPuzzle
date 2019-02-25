@@ -162,14 +162,9 @@ public class Scene extends JPanel {
             public void mouseMoved(MouseEvent e) {
                 boolean isPieceHovered = isPieceHovered(e);
                 boolean isControlHovered = isControlHovered(e);
-                if (isPieceHovered) {
+                if (isPieceHovered || isControlHovered) {
                     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                }
-                if (isControlHovered) {
-                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                }
-
-                if (!isPieceHovered && !isControlHovered) {
+                } else {
                     setCursor(Cursor.getDefaultCursor());
                 }
                 repaint();
@@ -292,8 +287,7 @@ public class Scene extends JPanel {
 
                     piece = new Piece(tmpX[indexTmp], tmpY[indexTmp], subX, subY, pieceSize, imageFile);
                     this.piecesList.add(piece);
-                    image = subImageRender(subX, subY, pieceSize);
-                    this.pieceImage.put(piece, image);
+                    this.pieceImage.put(piece, subImageRender(subX, subY, pieceSize));
                 }
             }
 
@@ -329,14 +323,14 @@ public class Scene extends JPanel {
         return imagePuzzle.getSubimage(x, y, size, size);
     }
 
-    private int getStep(String direction) {
+    private int getSteps(String direction) {
         int pieceSize = currentPiece.getSize();
 
-        int step = direction.equals(MOVE_LEFT) || direction.equals(MOVE_TOP) ? -pieceSize : pieceSize;
+        int steps = direction.equals(MOVE_LEFT) || direction.equals(MOVE_TOP) ? -pieceSize : pieceSize;
 
         boolean isAxisX = direction.equals(MOVE_LEFT) || direction.equals(MOVE_RIGHT);
 
-        int afterAddStep = isAxisX ? currentPiece.getX() + step : currentPiece.getY() + step;
+        int afterAddStep = (isAxisX ? currentPiece.getX() : currentPiece.getY()) + steps;
 
         int limitAxisX = (int) Math.sqrt(this.nbPieces) * pieceSize + CONTROL_SPACE_WIDTH + BORDER_WIDTH;
         int limitAxisY = (int) Math.sqrt(this.nbPieces) * pieceSize + BORDER_WIDTH;
@@ -354,36 +348,22 @@ public class Scene extends JPanel {
                 }
             }
         }
-        return step;
+        return steps;
     }
 
     private void move() {
         if (currentPiece != null) {
-            boolean isAxisX = false;
-            int step = getStep(MOVE_LEFT);
-            if (step == 0) {
-                step = getStep(MOVE_RIGHT);
-                if (step == 0) {
-                    step = getStep(MOVE_TOP);
-                    if (step == 0) {
-                        step = getStep(MOVE_BOTTOM);
-                        if (step != 0) {
-                            isAxisX = false;
-                        }
-                    } else {
-                        isAxisX = false;
+            String[] directions = new String[]{MOVE_LEFT, MOVE_TOP, MOVE_BOTTOM, MOVE_RIGHT};
+            int steps;
+            for (String direction: directions){
+                if((steps = getSteps(direction)) != 0) {
+                    if(direction.equals(MOVE_LEFT) || direction.equals(MOVE_RIGHT)){
+                        currentPiece.setX(currentPiece.getX() + steps);
+                    }else{
+                        currentPiece.setY(currentPiece.getY() + steps);
                     }
-                } else {
-                    isAxisX = true;
+                    break;
                 }
-            } else {
-                isAxisX = true;
-            }
-
-            if (isAxisX) {
-                currentPiece.setX(currentPiece.getX() + step);
-            } else {
-                currentPiece.setY(currentPiece.getY() + step);
             }
             currentPiece = null;
         }
@@ -451,7 +431,7 @@ public class Scene extends JPanel {
             Files.createDirectory(path);
         }
 
-        Path pathFichierPieces = Paths.get(path + "/pieces" + Math.random() + ".ser");
+        Path pathFichierPieces = Paths.get(path + "/pieces" + System.currentTimeMillis() + ".ser");
         if (Files.notExists(pathFichierPieces)) {
             Files.createFile(pathFichierPieces);
         }
@@ -478,6 +458,7 @@ public class Scene extends JPanel {
                 oos.writeObject(piece);
             }
             oos.flush();
+            showMessageDialog(null, "Sauvegarde réussie", "Sauvegarde", JOptionPane.INFORMATION_MESSAGE);
         } catch (final java.io.IOException e) {
             e.printStackTrace();
         } finally {
@@ -485,7 +466,6 @@ public class Scene extends JPanel {
                 if (oos != null) {
                     oos.flush();
                     oos.close();
-                    showMessageDialog(null, "Sauvegarde réussie", "Sauvegarde", JOptionPane.INFORMATION_MESSAGE);
                 }
             } catch (final IOException ex) {
                 ex.printStackTrace();
@@ -536,7 +516,6 @@ public class Scene extends JPanel {
                 JOptionPane.showMessageDialog(null, "Il n'ya aucune sauvegarde", "Information", INFORMATION_MESSAGE);
             }
 
-
             if (path != null) {
                 backupPath = path;
                 isBackup = true;
@@ -559,8 +538,6 @@ public class Scene extends JPanel {
                         } catch (EOFException e) {
                             tmpX = new int[piecesList.size()];
                             tmpY = new int[piecesList.size()];
-                            nbPieces = 0;
-
                             Piece piece1 = piecesList.get(0);
                             imageFile = piece1.getImageFile();
                             Image image = new ImageIcon(imageFile.getAbsolutePath()).getImage();
