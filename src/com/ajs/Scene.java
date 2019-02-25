@@ -1,7 +1,7 @@
 package com.ajs;
 
-import com.ajs.com.ajs.bibliothek.BiblioImage;
-import com.ajs.com.ajs.bibliothek.BibliothekDialog;
+import com.ajs.bibliothek.BiblioImage;
+import com.ajs.bibliothek.BibliothekDialog;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;

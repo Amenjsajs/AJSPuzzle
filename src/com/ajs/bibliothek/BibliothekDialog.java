@@ -1,4 +1,4 @@
-package com.ajs.com.ajs.bibliothek;
+package com.ajs.bibliothek;
 
 import com.ajs.Scene;
 import com.ajs.fileChooser.FilePreviewer;
