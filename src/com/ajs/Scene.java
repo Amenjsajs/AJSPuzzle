@@ -62,11 +62,6 @@ public class Scene extends JPanel {
 
     private boolean isBuild = false;
 
-    private final static String MOVE_LEFT = "move_left";
-    private final static String MOVE_RIGHT = "move_right";
-    private final static String MOVE_TOP = "move_top";
-    private final static String MOVE_BOTTOM = "move_bottom";
-
     //Sert pour le melange et le refresh
     int[] tmpX;
     int[] tmpY;
@@ -323,12 +318,12 @@ public class Scene extends JPanel {
         return imagePuzzle.getSubimage(x, y, size, size);
     }
 
-    private int getSteps(String direction) {
+    private int getSteps(Piece.Direction direction) {
         int pieceSize = currentPiece.getSize();
 
-        int steps = direction.equals(MOVE_LEFT) || direction.equals(MOVE_TOP) ? -pieceSize : pieceSize;
+        int steps = direction.equals(Piece.Direction.MOVE_LEFT) || direction.equals(Piece.Direction.MOVE_TOP) ? -pieceSize : pieceSize;
 
-        boolean isAxisX = direction.equals(MOVE_LEFT) || direction.equals(MOVE_RIGHT);
+        boolean isAxisX = direction.equals(Piece.Direction.MOVE_LEFT) || direction.equals(Piece.Direction.MOVE_RIGHT);
 
         int afterAddStep = (isAxisX ? currentPiece.getX() : currentPiece.getY()) + steps;
 
@@ -353,15 +348,10 @@ public class Scene extends JPanel {
 
     private void move() {
         if (currentPiece != null) {
-            String[] directions = new String[]{MOVE_LEFT, MOVE_TOP, MOVE_BOTTOM, MOVE_RIGHT};
             int steps;
-            for (String direction: directions){
+            for (Piece.Direction direction: Piece.Direction.values()){
                 if((steps = getSteps(direction)) != 0) {
-                    if(direction.equals(MOVE_LEFT) || direction.equals(MOVE_RIGHT)){
-                        currentPiece.setX(currentPiece.getX() + steps);
-                    }else{
-                        currentPiece.setY(currentPiece.getY() + steps);
-                    }
+                    currentPiece.move(steps, direction);
                     break;
                 }
             }

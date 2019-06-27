@@ -84,6 +84,17 @@ public class Piece implements Serializable {
         this.y = this.initialY;
     }
 
+    public void move(int steps, Direction direction){
+        if(direction.equals(Direction.MOVE_LEFT) || direction.equals(Direction.MOVE_RIGHT))
+            this.x += steps;
+        else if(direction.equals(Direction.MOVE_TOP) || direction.equals(Direction.MOVE_BOTTOM))
+            this.y += steps;
+    }
+
+    public enum Direction{
+        MOVE_LEFT, MOVE_RIGHT, MOVE_TOP, MOVE_BOTTOM
+    }
+
     @Override
     public String toString() {
         return "Piece[initialX: "+initialX+", initialY: "+initialY+"x: "+x+", y: "+y+", subX: "+ subX+", subY: "+subY+", size: "+size+", "+imageFile.getAbsolutePath()+"]";
