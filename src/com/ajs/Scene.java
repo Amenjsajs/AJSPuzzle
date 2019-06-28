@@ -15,9 +15,8 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
+import java.util.List;
 
 import static javax.swing.JOptionPane.*;
 
@@ -36,8 +35,9 @@ public class Scene extends JPanel {
     private final String CONTROL_TEXT_LOAD = "Charger une sauvegarde";
     private final String CONTROL_TEXT_REFRESH = "Rafraichir";
     private final String CONTROL_TEXT_DELETE = "Supprimer la sauvegarde";
+    private final String CONTROL_TEXT_SEE = "Voir";
     private String[] controlText = {CONTROL_TEXT_SHUFFLE, CONTROL_TEXT_NB_PIECE, CONTROL_TEXT_CHOOSE_IMAGE,
-            CONTROL_TEXT_SAVE, CONTROL_TEXT_LOAD, CONTROL_TEXT_REFRESH, CONTROL_TEXT_DELETE};
+            CONTROL_TEXT_SAVE, CONTROL_TEXT_LOAD, CONTROL_TEXT_REFRESH, CONTROL_TEXT_DELETE, CONTROL_TEXT_SEE};
     private int[] controlX = new int[controlText.length];
     private int[] controlY = new int[controlText.length];
     private int CONTROL_MARGING_TOP = 10;
@@ -48,8 +48,8 @@ public class Scene extends JPanel {
     private Integer[] nbPieceList = {4, 9, 16, 25, 36, 49, 64, 81, 100};
 
     private int BORDER_WIDTH = 5;
-    private final int IMAGE_PUZZLE_SIZE = 400;
-    private int tmpImagePuzzleSize = 400;
+    private final int IMAGE_PUZZLE_SIZE = 500;
+    private int tmpImagePuzzleSize = 500;
 
     private Piece currentPiece;
     private static Scene instance = null;
@@ -72,6 +72,12 @@ public class Scene extends JPanel {
 
     private final Color gradientColor1 = new Color(32, 150, 250);
     private final Color gradientColor2 = new Color(5, 250, 153);
+
+    private int moveCount = 0;
+
+    private List<Piece> pieceTrackList = new ArrayList<>();
+    private List<Piece.Direction> pieceTrackDirectionList = new ArrayList<>();
+    private List<Integer> pieceTrackStepsList = new ArrayList<>();
 
     private Scene() {
         Path path = Paths.get(CURRENT_RELATIVE_PATH + "/images/amenjs.png");
@@ -135,10 +141,13 @@ public class Scene extends JPanel {
                                 }
                             }
                             break;
+                        case CONTROL_TEXT_SEE:
+                            controleSee();
+                            break;
                     }
                 }
 
-                if (imageFile != null) {
+                if (currentPiece != null && imageFile != null) {
                     if (!isWin) {
                         move();
                         winTested();
@@ -272,7 +281,6 @@ public class Scene extends JPanel {
 
             tmpImagePuzzleSize = nbPiecesSqrt * pieceSize;
 
-            Piece piece;
             for (int i = 0, indexTmp = 0; i < nbPiecesSqrt; i++) {
                 for (int j = 0; j < nbPiecesSqrt; j++, indexTmp++) {
                     int subX = j * pieceSize;
@@ -280,7 +288,7 @@ public class Scene extends JPanel {
                     tmpX[indexTmp] = subX + CONTROL_SPACE_WIDTH + BORDER_WIDTH;
                     tmpY[indexTmp] = subY + BORDER_WIDTH;
 
-                    piece = new Piece(tmpX[indexTmp], tmpY[indexTmp], subX, subY, pieceSize, imageFile);
+                    Piece piece = new Piece(tmpX[indexTmp], tmpY[indexTmp], subX, subY, pieceSize, imageFile);
                     this.piecesList.add(piece);
                     this.pieceImage.put(piece, subImageRender(subX, subY, pieceSize));
                 }
@@ -349,20 +357,29 @@ public class Scene extends JPanel {
     private void move() {
         if (currentPiece != null) {
             int steps;
-            for (Piece.Direction direction: Piece.Direction.values()){
-                if((steps = getSteps(direction)) != 0) {
+            for (Piece.Direction direction : Piece.Direction.values()) {
+                if ((steps = getSteps(direction)) != 0) {
                     currentPiece.move(steps, direction);
+                    moveCount++;
+                    pieceTrackList.add(currentPiece);
+                    pieceTrackDirectionList.add(direction);
+                    pieceTrackStepsList.add(steps);
                     break;
                 }
             }
             currentPiece = null;
         }
+        System.out.println(moveCount);
     }
 
     private void controlShuffle() {
         if (imageFile != null) {
             isWin = false;
             Piece lastPiece = piecesList.get(nbPieces - 1);
+
+            pieceTrackList = new ArrayList<>();
+            pieceTrackDirectionList = new ArrayList<>();
+            pieceTrackStepsList = new ArrayList<>();
 
             //On melange la liste des pieces
             Collections.shuffle(this.piecesList);
@@ -586,6 +603,37 @@ public class Scene extends JPanel {
         }
     }
 
+    private void controleSee() {
+        if (imageFile != null) {
+            controlRefresh();
+
+            String[] values = {"0.3", "0.5", "0.7", "1"};
+
+            Object selected = JOptionPane.showInputDialog(null, "Selection la vitesse de lecture (en seconde)", "Vitesse de lecture", PLAIN_MESSAGE, null, values, "0");
+            if (selected != null) {
+                long v = (long) (Double.parseDouble(selected.toString()) * 1000);
+                new Thread(() -> {
+                    try {
+                        int index = 0;
+                        //Temps de latence
+                        Thread.sleep(1000);
+
+                        for (Piece piece : pieceTrackList) {
+                            piece.move(pieceTrackStepsList.get(index), pieceTrackDirectionList.get(index));
+                            index++;
+                            repaint();
+                            Thread.sleep(v);
+                        }
+                        winTested();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+
+            }
+        }
+    }
+
     private void winTested() {
         isWin = true;
         Piece lastPiece = new Piece();
@@ -602,6 +650,7 @@ public class Scene extends JPanel {
         if (isWin) {
             lastPiece.setX(lastPiece.getSubX() + CONTROL_SPACE_WIDTH + BORDER_WIDTH);
             lastPiece.setY(lastPiece.getSubY() + BORDER_WIDTH);
+            repaint();
         }
     }
 
