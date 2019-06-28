@@ -184,6 +184,8 @@ public class Scene extends JPanel {
         g2d.setPaint(gp);
         g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
 
+        drawCoupFrame(g2d);
+
         drawBorder(g2d);
         drawControls(g2d);
         if (isBuild) {
@@ -227,13 +229,32 @@ public class Scene extends JPanel {
         }
     }
 
+    private void drawCoupFrame(Graphics2D g2d){
+        int x = CONTROL_MARGING_LEFT;
+        int y = CONTROL_MARGING_TOP;
+
+        g2d.setFont(new Font("Arial", Font.PLAIN, 16));
+        FontMetrics fm = g2d.getFontMetrics();
+        g2d.setColor(Color.blue);
+        g2d.fillRoundRect(x, 5, CONTROL_WIDTH, 100, 30, 30);
+
+        int textX = CONTROL_MARGING_LEFT + 10;
+        int textY = y + 25;
+
+        g2d.setColor(Color.white);
+        g2d.drawString("Coups :", textX, textY);
+
+        textX = CONTROL_SPACE_WIDTH - fm.stringWidth(moveCount+"")-20;
+        g2d.drawString(moveCount+"",textX,textY);
+    }
+
     private void drawControls(Graphics2D g2d) {
         int textX;
         int textY;
 
         for (int i = 0, len = controlText.length; i < len; i++) {
             controlX[i] = CONTROL_MARGING_LEFT;
-            controlY[i] = (CONTROL_HEIGHT + CONTROL_MARGING_TOP) * i + CONTROL_MARGING_TOP;
+            controlY[i] = 105 + (CONTROL_HEIGHT + CONTROL_MARGING_TOP) * i + CONTROL_MARGING_TOP;
 
             if (i == currentControlIndex) {
                 g2d.setColor(controlColorHover);
