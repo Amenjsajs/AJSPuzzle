@@ -35,11 +35,10 @@ public class Scene extends JPanel {
     private final String CONTROL_TEXT_LOAD = "Charger une sauvegarde";
     private final String CONTROL_TEXT_REFRESH = "Rafraichir";
     private final String CONTROL_TEXT_DELETE = "Supprimer la sauvegarde";
-    private final String CONTROL_TEXT_SEE = "Voir";
+    private final String CONTROL_TEXT_REPLAY = "Replay";
     private String[] controlText = {CONTROL_TEXT_SHUFFLE, CONTROL_TEXT_NB_PIECE, CONTROL_TEXT_CHOOSE_IMAGE,
-            CONTROL_TEXT_SAVE, CONTROL_TEXT_LOAD, CONTROL_TEXT_REFRESH, CONTROL_TEXT_DELETE, CONTROL_TEXT_SEE};
-    private int[] controlX = new int[controlText.length];
-    private int[] controlY = new int[controlText.length];
+            CONTROL_TEXT_SAVE, CONTROL_TEXT_LOAD, CONTROL_TEXT_REFRESH, CONTROL_TEXT_DELETE, CONTROL_TEXT_REPLAY};
+
     private int CONTROL_MARGING_TOP = 10;
     private int CONTROL_MARGING_LEFT = 10;
     private int CONTROL_WIDTH = CONTROL_SPACE_WIDTH - (CONTROL_MARGING_LEFT * 2);
@@ -61,13 +60,13 @@ public class Scene extends JPanel {
     private BufferedImage imagePuzzle;
 
     private boolean isBuild = false;
+    private boolean replayLaunched = false;
+    private Thread replayThread;
 
     //Sert pour le melange et le refresh
-    int[] tmpX;
-    int[] tmpY;
+    private int[] tmpX;
+    private int[] tmpY;
 
-    private final Color controlColorEnable = new Color(250, 100, 0);
-    private final Color controlDiseabledColor = new Color(150, 150, 150);
     private final Color controlColorHover = new Color(150, 220, 0);
 
     private final Color gradientColor1 = new Color(32, 150, 250);
@@ -78,6 +77,73 @@ public class Scene extends JPanel {
     private List<Piece> pieceTrackList = new ArrayList<>();
     private List<Piece.Direction> pieceTrackDirectionList = new ArrayList<>();
     private List<Integer> pieceTrackStepsList = new ArrayList<>();
+
+    private Control[] controls = new Control[controlText.length];
+
+    {
+        for (int i = 0, len = controlText.length; i < len; i++) {
+            int x = CONTROL_MARGING_LEFT;
+            int y = 105 + (CONTROL_HEIGHT + CONTROL_MARGING_TOP) * i + CONTROL_MARGING_TOP;
+            controls[i] = new Control(controlText[i], x, y, CONTROL_WIDTH, CONTROL_HEIGHT);
+            switch (controlText[i]) {
+                case CONTROL_TEXT_SHUFFLE:
+                    controls[i].addControlListener(this::controlShuffle);
+                    break;
+                case CONTROL_TEXT_NB_PIECE:
+                    controls[i].addControlListener(() -> {
+                        controlSave("Sauvegardez cette partie avant de changer de nombre de pièces\n" +
+                                "Sinon elle sera définitivement perdue");
+                        if (imageFile != null) {
+                            controlChangeNbPieces();
+                        }
+                    });
+                    break;
+                case CONTROL_TEXT_CHOOSE_IMAGE:
+                    controls[i].addControlListener(() -> {
+                        controlSave("Sauvegardez cette partie avant de changer d'image\n" +
+                                "Sinon elle sera définitivement perdue");
+                        controlChooseImage();
+                    });
+                    break;
+                case CONTROL_TEXT_SAVE:
+                    controls[i].addControlListener(() -> {
+                        if (imageFile != null) {
+                            try {
+                                controlSave();
+                            } catch (IOException e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+                    });
+                    break;
+                case CONTROL_TEXT_LOAD:
+                    controls[i].addControlListener(() -> {
+                        controlSave("Sauvegardez cette partie avant de charger une sauvegarde\n" +
+                                "Sinon elle sera définitivement perdue");
+                        controlLoad();
+                    });
+                    break;
+                case CONTROL_TEXT_REFRESH:
+                    controls[i].addControlListener(this::controlRefresh);
+                    break;
+                case CONTROL_TEXT_DELETE:
+                    controls[i].addControlListener(() -> {
+                        if (isBackup) {
+                            int rep = JOptionPane.showConfirmDialog(null,
+                                    "Voulez-vous vraiment supprimer cette sauvegarde?",
+                                    "Confirmation", OK_CANCEL_OPTION);
+                            if (rep == OK_OPTION) {
+                                controlDeleteBackup();
+                            }
+                        }
+                    });
+                    break;
+                case CONTROL_TEXT_REPLAY:
+                    controls[i].addControlListener(this::controlReplay);
+                    break;
+            }
+        }
+    }
 
     private Scene() {
         Path path = Paths.get(CURRENT_RELATIVE_PATH + "/images/amenjs.png");
@@ -95,56 +161,7 @@ public class Scene extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (currentControlIndex != -1) {
-                    String text = controlText[currentControlIndex];
-                    switch (text) {
-                        case CONTROL_TEXT_SHUFFLE:
-                            controlShuffle();
-                            break;
-                        case CONTROL_TEXT_NB_PIECE:
-                            controlSave("Sauvegardez cette partie avant de changer de nombre de pièces\n" +
-                                    "Sinon elle sera définitivement perdue");
-                            if (imageFile != null) {
-                                controlChangeNbPieces();
-                            }
-                            break;
-                        case CONTROL_TEXT_CHOOSE_IMAGE:
-                            controlSave("Sauvegardez cette partie avant de changer d'image\n" +
-                                    "Sinon elle sera définitivement perdue");
-                            controlChooseImage();
-                            break;
-                        case CONTROL_TEXT_SAVE:
-                            if (imageFile != null) {
-                                try {
-                                    controlSave();
-                                } catch (IOException e1) {
-                                    e1.printStackTrace();
-                                }
-                            }
-                            break;
-                        case CONTROL_TEXT_LOAD:
-                            controlSave("Sauvegardez cette partie avant de charger une sauvegarde\n" +
-                                    "Sinon elle sera définitivement perdue");
-                            controlLoad();
-                            break;
-                        case CONTROL_TEXT_REFRESH:
-                            if (imageFile != null) {
-                                controlRefresh();
-                            }
-                            break;
-                        case CONTROL_TEXT_DELETE:
-                            if (isBackup) {
-                                int rep = JOptionPane.showConfirmDialog(null,
-                                        "Voulez-vous vraiment supprimer cette sauvegarde?",
-                                        "Confirmation", OK_CANCEL_OPTION);
-                                if (rep == OK_OPTION) {
-                                    controlDeleteBackup();
-                                }
-                            }
-                            break;
-                        case CONTROL_TEXT_SEE:
-                            controleSee();
-                            break;
-                    }
+                    controls[currentControlIndex].doClick();
                 }
 
                 if (currentPiece != null && imageFile != null) {
@@ -229,7 +246,7 @@ public class Scene extends JPanel {
         }
     }
 
-    private void drawCoupFrame(Graphics2D g2d){
+    private void drawCoupFrame(Graphics2D g2d) {
         int x = CONTROL_MARGING_LEFT;
         int y = CONTROL_MARGING_TOP;
 
@@ -244,49 +261,52 @@ public class Scene extends JPanel {
         g2d.setColor(Color.white);
         g2d.drawString("Coups :", textX, textY);
 
-        textX = CONTROL_SPACE_WIDTH - fm.stringWidth(moveCount+"")-20;
-        g2d.drawString(moveCount+"",textX,textY);
+        textX = CONTROL_SPACE_WIDTH - fm.stringWidth(moveCount + "") - 20;
+        g2d.drawString(moveCount + "", textX, textY);
     }
 
     private void drawControls(Graphics2D g2d) {
-        int textX;
-        int textY;
-
         for (int i = 0, len = controlText.length; i < len; i++) {
-            controlX[i] = CONTROL_MARGING_LEFT;
-            controlY[i] = 105 + (CONTROL_HEIGHT + CONTROL_MARGING_TOP) * i + CONTROL_MARGING_TOP;
+            Control control = controls[i];
 
-            if (i == currentControlIndex) {
-                g2d.setColor(controlColorHover);
-            } else {
-                g2d.setColor(controlColorEnable);
-            }
+            control.setEnable(!replayLaunched);
+
+            g2d.setColor(control.getBgColor());
 
             if (imageFile == null) {
                 if (controlText[i].equals(CONTROL_TEXT_SHUFFLE) || controlText[i].equals(CONTROL_TEXT_SAVE) || controlText[i].equals(CONTROL_TEXT_NB_PIECE) ||
                         controlText[i].equals(CONTROL_TEXT_REFRESH)) {
-                    g2d.setColor(controlDiseabledColor);
+                    control.setEnable(false);
+                    g2d.setColor(control.getBgColor());
                 }
             }
+
             if ((!isBackup && controlText[i].equals(CONTROL_TEXT_DELETE))) {
-                g2d.setColor(controlDiseabledColor);
+                control.setEnable(false);
+                g2d.setColor(control.getBgColor());
             }
 
-            g2d.fillRoundRect(controlX[i], controlY[i], CONTROL_WIDTH, CONTROL_HEIGHT, 30, 30);
+            if (!isWin && controlText[i].equals(CONTROL_TEXT_REPLAY)) {
+                control.setEnable(false);
+                g2d.setColor(control.getBgColor());
+            }
 
-            g2d.setColor(Color.white);
+            g2d.fillRoundRect(control.getX(), control.getY(), control.getWidth(), control.getHeight(), 30, 30);
+
             g2d.setFont(new Font("Arial", Font.PLAIN, 18));
             FontMetrics fm = g2d.getFontMetrics();
 
-            textX = (CONTROL_SPACE_WIDTH - fm.stringWidth(controlText[i])) / 2;
-            textY = controlY[i];
-            g2d.drawString(controlText[i], textX, textY + 25);
-        }
+            int textX = (CONTROL_SPACE_WIDTH - fm.stringWidth(controlText[i])) / 2;
+            int textY = 105 + (CONTROL_HEIGHT + CONTROL_MARGING_TOP) * i + CONTROL_MARGING_TOP + 25;
 
+            g2d.setColor(control.getFontColor());
+            g2d.drawString(control.getText(), textX, textY);
+        }
     }
 
-    public void build() {
+    void build() {
         if (imageFile != null) {
+            resetPiecesTrack();
             isBuild = true;
             Image image = new ImageIcon(imageFile.getAbsolutePath()).getImage();
             this.imagePuzzle = (BufferedImage) ImageResizer.scaleImage(image, IMAGE_PUZZLE_SIZE, IMAGE_PUZZLE_SIZE);
@@ -332,10 +352,13 @@ public class Scene extends JPanel {
     }
 
     private boolean isControlHovered(MouseEvent e) {
-        for (int i = 0, len = controlText.length; i < len; i++) {
-            if ((controlX[i] <= e.getX() && controlX[i] + CONTROL_WIDTH >= e.getX())
-                    && (controlY[i] <= e.getY() && controlY[i] + CONTROL_HEIGHT >= e.getY())) {
+        for (int i = 0, len = controls.length; i < len; i++) {
+            Control control = controls[i];
+            control.setHovered(false);
+            if ((control.getX() <= e.getX() && control.getX() + CONTROL_WIDTH >= e.getX()) &&
+                    (control.getY() <= e.getY() && control.getY() + CONTROL_HEIGHT >= e.getY())) {
                 currentControlIndex = i;
+                control.setHovered(true);
                 return true;
             }
         }
@@ -376,6 +399,7 @@ public class Scene extends JPanel {
     }
 
     private void move() {
+        if (replayLaunched) return;
         if (currentPiece != null) {
             int steps;
             for (Piece.Direction direction : Piece.Direction.values()) {
@@ -390,17 +414,14 @@ public class Scene extends JPanel {
             }
             currentPiece = null;
         }
-        System.out.println(moveCount);
     }
 
     private void controlShuffle() {
         if (imageFile != null) {
+            resetPiecesTrack();
+
             isWin = false;
             Piece lastPiece = piecesList.get(nbPieces - 1);
-
-            pieceTrackList = new ArrayList<>();
-            pieceTrackDirectionList = new ArrayList<>();
-            pieceTrackStepsList = new ArrayList<>();
 
             //On melange la liste des pieces
             Collections.shuffle(this.piecesList);
@@ -603,6 +624,7 @@ public class Scene extends JPanel {
 
     private void controlRefresh() {
         isWin = false;
+        resetPiecesTrack();
         for (Piece piece : piecesList) {
             piece.initPosition();
         }
@@ -624,8 +646,13 @@ public class Scene extends JPanel {
         }
     }
 
-    private void controleSee() {
-        if (imageFile != null) {
+    private void controlReplay() {
+        if (imageFile != null && isWin) {
+            replayLaunched = true;
+
+            for (Control control: controls)
+                control.setEnable(false);
+
             controlRefresh();
 
             String[] values = {"0.3", "0.5", "0.7", "1"};
@@ -633,7 +660,7 @@ public class Scene extends JPanel {
             Object selected = JOptionPane.showInputDialog(null, "Selection la vitesse de lecture (en seconde)", "Vitesse de lecture", PLAIN_MESSAGE, null, values, "0");
             if (selected != null) {
                 long v = (long) (Double.parseDouble(selected.toString()) * 1000);
-                new Thread(() -> {
+                replayThread = new Thread(() -> {
                     try {
                         int index = 0;
                         //Temps de latence
@@ -646,11 +673,14 @@ public class Scene extends JPanel {
                             Thread.sleep(v);
                         }
                         winTested();
+                        replayLaunched = false;
+                        for (Control control: controls)
+                            control.setEnable(true);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                }).start();
-
+                });
+                replayThread.start();
             }
         }
     }
@@ -672,6 +702,15 @@ public class Scene extends JPanel {
             lastPiece.setX(lastPiece.getSubX() + CONTROL_SPACE_WIDTH + BORDER_WIDTH);
             lastPiece.setY(lastPiece.getSubY() + BORDER_WIDTH);
             repaint();
+        }
+    }
+
+    private void resetPiecesTrack() {
+        if (!replayLaunched) {
+            moveCount = 0;
+            pieceTrackList = new ArrayList<>();
+            pieceTrackDirectionList = new ArrayList<>();
+            pieceTrackStepsList = new ArrayList<>();
         }
     }
 
